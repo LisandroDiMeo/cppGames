@@ -22,55 +22,70 @@ struct Head{
 
 class Snake{
     public:
-    Tail tail;
-    Head head;
-    int tailLength;
-    void changeDirection(Direction dir){
-
-        int prevX = tail.tailX[0];
-        int prevY = tail.tailY[0];
-        int prev2x,prev2y;
-        tail.tailX[0] = head.x;
-        tail.tailY[0] = head.y;
-        for(int i = 1; i < tailLength; i++){
-            prev2x = tail.tailX[i];
-            prev2y = tail.tailY[i];
-            tail.tailX[i] = prevX;
-            tail.tailY[i] = prevY;
-            prevX = prev2x;
-            prevY = prev2y;
+        Snake(int posX, int posY){
+            head.x = posX;
+            head.y = posY;
         }
-
-        switch(dir){
-            case LEFT:
-                head.x--;
-                break;
-            case RIGHT:
-                head.x++;
-                break;
-            case UP:
-                head.y--;
-                break;
-            case DOWN:
-                head.y++;
-                break;
-            default:
-                break;
+        Snake(){
+            head.x = 0;
+            head.y = 0;
         }
-    }
-    // int getTailLength() const{
-    //     return tailLength;
-    // }
-    // int increaseTailLength(){
-    //     tailLength++;
-    //     return tailLength;    
-    // }
-    // int getHeadx(){
-    //     return head.x;
-    // }
-    // int getHeady(){
-    //     return head.y;
-    // }
+        void changeDirection(Direction dir){
+
+            int prevX = tail.tailX[0];
+            int prevY = tail.tailY[0];
+            int prev2x,prev2y;
+            tail.tailX[0] = head.x;
+            tail.tailY[0] = head.y;
+            for(int i = 1; i < tailLength; i++){
+                prev2x = tail.tailX[i];
+                prev2y = tail.tailY[i];
+                tail.tailX[i] = prevX;
+                tail.tailY[i] = prevY;
+                prevX = prev2x;
+                prevY = prev2y;
+            }
+
+            switch(dir){
+                case LEFT:
+                    head.x--;
+                    break;
+                case RIGHT:
+                    head.x++;
+                    break;
+                case UP:
+                    head.y--;
+                    break;
+                case DOWN:
+                    head.y++;
+                    break;
+                default:
+                    break;
+            }
+        }
+        int getTailLength() const{
+            return tailLength;
+        }
+        int increaseTailLength(){
+            tailLength++;
+            return tailLength;    
+        }
+        int getHeadx() const{
+            return head.x;
+        }
+        int getHeady() const{
+            return head.y;
+        }
+        int getTailAtx(int at) const{
+            return tail.tailX[at];
+        }
+        int getTailAty(int at) const{
+            return tail.tailY[at];
+        }
+    private:
+        Tail tail;
+        Head head;
+        int tailLength;
 };
 
 struct Display{
@@ -97,15 +112,14 @@ class Game{
     Direction eDir;
 
     Game(int width, int height){
-        this->gameOver = false;
-        this->eDir = STOP;
-        this->display.height = height;
-        this->display.width = width;
-        this->snake.head.x = this->display.width / 2;
-        this->snake.head.y = this->display.height / 2;
-        fruit.fruitX = rand()%this->display.width + 1;
-        fruit.fruitY = rand()%this->display.height + 1;
-        this->score = 0;
+        gameOver = false;
+        eDir = STOP;
+        display.height = height;
+        display.width = width;
+        snake = Snake(display.width / 2, display.height / 2);
+        fruit.fruitX = rand()%display.width + 1;
+        fruit.fruitY = rand()%display.height + 1;
+        score = 0;
     }
 
     void Setup(){
@@ -117,28 +131,28 @@ class Game{
     }
 
     void checkCollitions(){
-        if(snake.head.x > display.width || 
-        snake.head.x < 1 || 
-        snake.head.y > display.height ||
-        snake.head.y < 1)
+        if(snake.getHeadx() > display.width || 
+        snake.getHeadx() < 1 || 
+        snake.getHeady() > display.height ||
+        snake.getHeady() < 1)
             gameOver = true;
-        if(snake.head.x == fruit.fruitX && snake.head.y == fruit.fruitY){
+        if(snake.getHeadx() == fruit.fruitX && snake.getHeady() == fruit.fruitY){
             score+=1;
             fruit.generateNewFruit(display.width,display.height);
-            snake.tailLength++;
+            snake.increaseTailLength();
         }
-        for(int i = 0; i < snake.tailLength; i++)
-            if(snake.head.x == snake.tail.tailX[i] && snake.head.y == snake.tail.tailY[i])
+        for(int i = 0; i < snake.getTailLength(); i++)
+            if(snake.getHeadx() == snake.getTailAtx(i) && snake.getHeady() == snake.getTailAty(i))
                 gameOver = true;
     }
 
     void startGame(){
-        this->Setup();
-        while(!this->gameOver){
-            this->updateGameScren();
-            this->input();
-            this->snake.changeDirection(this->eDir);
-            this->checkCollitions();
+        Setup();
+        while(!gameOver){
+            updateGameScren();
+            input();
+            snake.changeDirection(eDir);
+            checkCollitions();
         }
         getch();
         endwin();
@@ -154,13 +168,13 @@ class Game{
                     mvprintw(i,j,"*");
                 else if( j == 0 | j == display.height + 1 )
                     mvprintw(i,j,"*");
-                else if( i == snake.head.y && j == snake.head.x)
+                else if( i == snake.getHeady() && j == snake.getHeadx())
                     mvprintw(i,j,"O");
                 else if(fruit.fruitX == j && fruit.fruitY == i)
                     mvprintw(i,j,"@");
                 else
-                    for(int k = 0; k < snake.tailLength; k++){
-                        if(snake.tail.tailX[k] == j && snake.tail.tailY[k] == i)
+                    for(int k = 0; k < snake.getTailLength(); k++){
+                        if(snake.getTailAtx(k) == j && snake.getTailAty(k) == i)
                             mvprintw(i,j,"o");
                     }
             }
@@ -174,19 +188,19 @@ class Game{
         int c = getch();
         switch(c){
             case KEY_LEFT:
-                this->eDir = LEFT;
+                eDir = LEFT;
                 break;
             case KEY_UP:
-                this->eDir = UP;
+                eDir = UP;
                 break;
             case KEY_DOWN:
-                this->eDir = DOWN;
+                eDir = DOWN;
                 break;
             case KEY_RIGHT:
-                this->eDir = RIGHT;
+                eDir = RIGHT;
                 break;
             case 113: // q
-                this->gameOver = true;
+                gameOver = true;
                 break;
         }
     }
