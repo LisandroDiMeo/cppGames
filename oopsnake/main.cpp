@@ -104,12 +104,6 @@ struct Fruit{
 
 class Game{
     public:
-    Snake snake;
-    Display display;
-    Fruit fruit;
-    int score;
-    bool gameOver;
-    Direction eDir;
 
     Game(int width, int height){
         gameOver = false;
@@ -121,6 +115,28 @@ class Game{
         fruit.fruitY = rand()%display.height + 1;
         score = 0;
     }
+
+    void startGame(){
+        Setup();
+        while(!gameOver){
+            updateGameScren();
+            input();
+            snake.changeDirection(eDir);
+            checkCollitions();
+        }
+        getch();
+        endwin();
+    }
+
+
+    private:
+    Snake snake;
+    Display display;
+    Fruit fruit;
+    int score;
+    bool gameOver;
+    Direction eDir;
+
 
     void Setup(){
         initscr();
@@ -145,19 +161,6 @@ class Game{
             if(snake.getHeadx() == snake.getTailAtx(i) && snake.getHeady() == snake.getTailAty(i))
                 gameOver = true;
     }
-
-    void startGame(){
-        Setup();
-        while(!gameOver){
-            updateGameScren();
-            input();
-            snake.changeDirection(eDir);
-            checkCollitions();
-        }
-        getch();
-        endwin();
-    }
-
     void updateGameScren(){
         clear();
         for(int i = 0; i < display.width + 2; i++)
@@ -204,6 +207,7 @@ class Game{
                 break;
         }
     }
+
 };
 
 using namespace std;
