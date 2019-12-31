@@ -2,6 +2,7 @@
 #include "ncurses.h"
 #include "iostream"
 #include "vector"
+#include "list"
 
 struct Display{
     int width;
@@ -70,10 +71,10 @@ class XWing{
         int changeDirection(Direction dir){
             switch(dir){
                 case LEFT:
-                    return xPos--;
+                    return xPos-=2;
                     break;
                 case RIGHT:
-                    return xPos++;
+                    return xPos+=2;
                     break;
                 case UP:
                     return -1;
@@ -106,13 +107,13 @@ class TIE_fighter{
     public:
         int getPosx() const { return xPos; };
         int getPosy() const { return yPos; };
-        int changePosx(int a) { 
-            if(a < 0){
-                xPos--;
-            }else{
-                xPos++;
+        int changePosx() { 
+            if(direction < 0){
+                return xPos--;
             }
-            return 1;
+            else{
+                return xPos++;
+            }
         };
         int changePosy() { return ++yPos ; };
         TIE_fighter(){
@@ -140,9 +141,9 @@ class TIE_fighter{
                 velocity = 3;
         }
         void draw(int _x, int _y){
-            for(int i = 0; i < 1; i++){
+            for(int i = 0; i < 5; i++){
                 char *a = new char(body.body[i]);
-                mvprintw(_x,_y,"a");
+                mvprintw(_x,_y+i,a);
                 free(a);
             }
         }
@@ -165,7 +166,7 @@ class Game{
             gameOver = false;
             dir = STOP;
             score = 0;
-            enemies.push_back(TIE_fighter(2,2));   
+            enemies.push_back(TIE_fighter(display.width / 2,2));   
         };
         void startGame(){
             Setup();
@@ -177,7 +178,8 @@ class Game{
                     // Crear bala en esta pos
                     bullets.push_back(Bullet(xwing.getPos(),display.height - xwing.sizeY()));
                 }
-                enemies[0].changePosx(1);
+                changeEnemiesPosition();
+                checkCollitions();
             }
             getch();
             endwin();
@@ -190,7 +192,7 @@ class Game{
         bool gameOver;
         int score;
         std::vector<Bullet> bullets;
-        std::vector<TIE_fighter> enemies;
+        std::list<TIE_fighter> enemies;
 
         void Setup(){
             initscr();
@@ -200,6 +202,41 @@ class Game{
             noecho();
             cbreak();
             curs_set(0);
+        }
+
+        void checkCollitions(){
+            // colisiones entre enemigos-balas
+            for(int i = 0; i < bullets.size(); i++){
+                // for(int j = 0; j < enemies.size(); j++){
+                    // if(bullets[i].getPosx() >= enemies[j].getPosx() && 
+                    // bullets[i].getPosx() <= enemies[j].getPosx() + 5 &&
+                    // bullets[i].getPosy() == enemies[j].getPosy()){
+                    //     // enemies.pop_back();    
+                    // }
+                // }
+                std::list<TIE_fighter>::iterator j = enemies.begin();
+                for(TIE_fighter &tie : enemies){
+                    if(bullets[i].getPosx() >= tie.getPosx() && 
+                    bullets[i].getPosx() <= tie.getPosx() + 5 &&
+                    bullets[i].getPosy() == tie.getPosy()){
+                        enemies.erase(j);
+                    }
+                    std::advance(j,1);
+                }
+            }
+        }
+
+        void changeEnemiesPosition(){
+            for(TIE_fighter &tie : enemies){
+                if(tie.getPosx() > 60){
+                    tie.changeDirection();
+                    tie.changePosy();
+                }else if(tie.getPosx() < 3){
+                    tie.changeDirection();
+                    tie.changePosy();
+                }
+                tie.changePosx();
+            }
         }
 
         void updateGameScreen(){
@@ -225,10 +262,9 @@ class Game{
                     }
 
                     if(enemies.size() > 0){
-                        for(int k = 0; k < enemies.size(); k++){
-                            if(j == enemies[k].getPosx() && i == enemies[k].getPosy()){
-                                char * a = new char(enemies[k].getPosx());
-                                mvprintw(enemies[k].getPosy(),enemies[k].getPosx(),"u");                       
+                        for(TIE_fighter &tie : enemies){
+                            if(j == tie.getPosx() && i == tie.getPosy()){
+                                tie.draw(i,j);
                             }   
                         }
                     }
