@@ -166,10 +166,11 @@ class Game{
             gameOver = false;
             dir = STOP;
             score = 0;
-            enemies.push_back(TIE_fighter(display.width / 2,2));   
+            // enemies.push_back(TIE_fighter(display.width / 2,2));   
         };
         void startGame(){
             Setup();
+            timer = clock();
             while(!gameOver){
                 updateGameScreen();
                 input();
@@ -180,6 +181,11 @@ class Game{
                 }
                 changeEnemiesPosition();
                 checkCollitions();
+                timePassed = int(float(clock() - timer));
+                if(timePassed > 50000){
+                    timer = clock();
+                    enemies.push_back(TIE_fighter(display.width / 2 , 2));
+                }
             }
             getch();
             endwin();
@@ -191,8 +197,10 @@ class Game{
         XWing xwing;
         bool gameOver;
         int score;
+        int timePassed;
         std::vector<Bullet> bullets;
         std::list<TIE_fighter> enemies;
+        clock_t timer;
 
         void Setup(){
             initscr();
@@ -207,19 +215,17 @@ class Game{
         void checkCollitions(){
             // colisiones entre enemigos-balas
             for(int i = 0; i < bullets.size(); i++){
-                // for(int j = 0; j < enemies.size(); j++){
-                    // if(bullets[i].getPosx() >= enemies[j].getPosx() && 
-                    // bullets[i].getPosx() <= enemies[j].getPosx() + 5 &&
-                    // bullets[i].getPosy() == enemies[j].getPosy()){
-                    //     // enemies.pop_back();    
-                    // }
-                // }
                 std::list<TIE_fighter>::iterator j = enemies.begin();
                 for(TIE_fighter &tie : enemies){
                     if(bullets[i].getPosx() >= tie.getPosx() && 
                     bullets[i].getPosx() <= tie.getPosx() + 5 &&
                     bullets[i].getPosy() == tie.getPosy()){
                         enemies.erase(j);
+                        score++;
+                    }
+                    if(tie.getPosy() > display.height - 3){
+                        gameOver = true;
+                        return;
                     }
                     std::advance(j,1);
                 }
